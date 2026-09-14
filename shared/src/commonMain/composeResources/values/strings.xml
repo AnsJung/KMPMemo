@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Pocket Memo</string>
+
+    <!-- Memo List -->
+    <string name="memo_list_title">Pocket Memo</string>
+    <string name="memo_list_count">%1$d개의 메모</string>
+    <string name="memo_list_empty_memo_1">아직 메모가 없어요</string>
+    <string name="memo_list_empty_memo_2">새 메모를 작성해 생각을 남겨보세요</string>
+    <string name="memo_list_untitled">제목 없음</string>
+    <string name="memo_list_created_at">%1$s 생성</string>
+    <string name="memo_list_updated_at">%1$s 수정</string>
+    <string name="memo_list_search_content_description">메모 검색</string>
+    <string name="memo_list_home_content_description">홈</string>
+    <string name="memo_list_new_memo_content_description">새 메모 작성</string>
+</resources>

@@ -32,7 +32,7 @@ class MemoListViewModelTest {
         val store = ViewModelStore()
         try {
             // 비어 있지 않은 목록으로 검증해야 기본 UI 상태만 반환하는 오류를 잡을 수 있다.
-            val memo = Memo(1L, "첫 메모", "본문", 1_000L, 1_000L)
+            val memo = Memo(1L, "첫 메모", "본문", 1_000L)
             val repository = FakeMemoRepository(listOf(memo))
             val viewModel = MemoListViewModel(repository)
 
