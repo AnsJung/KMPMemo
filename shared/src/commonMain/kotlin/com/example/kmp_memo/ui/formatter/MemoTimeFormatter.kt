@@ -1,4 +1,4 @@
-package com.example.kmp_memo.ui
+package com.example.kmp_memo.ui.formatter
 
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone

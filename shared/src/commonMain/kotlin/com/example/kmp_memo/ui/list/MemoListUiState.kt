@@ -1,4 +1,4 @@
-package com.example.kmp_memo.ui
+package com.example.kmp_memo.ui.list
 
 import com.example.kmp_memo.data.model.Memo
 

@@ -3,6 +3,7 @@ package com.example.kmp_memo.ui
 import androidx.lifecycle.ViewModelStore
 import com.example.kmp_memo.data.model.Memo
 import com.example.kmp_memo.data.repository.MemoRepository
+import com.example.kmp_memo.ui.list.MemoListViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancelChildren
