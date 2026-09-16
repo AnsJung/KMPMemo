@@ -1,4 +1,4 @@
-package com.example.kmp_memo.ui
+package com.example.kmp_memo.ui.list
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -42,20 +42,31 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun MemoListScreen(
+    onMemoClick: (Long) -> Unit,
+    onSearchClick: () -> Unit
+) {
+    MemoListScreen(
+        uiState = MemoListUiState(memos = emptyList()),
+        onMemoClick = onMemoClick,
+        onSearchClick = onSearchClick
+    )
+}
+
+@Composable
+private fun MemoListScreen(
     uiState: MemoListUiState,
     onMemoClick: (Long) -> Unit,
-    onSearchClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    onSearchClick: () -> Unit
 ) {
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 24.dp, top = 40.dp, end = 24.dp),
+                .padding(start = 24.dp, top = 24.dp, end = 24.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -96,7 +107,7 @@ fun MemoListScreen(
 
         if (uiState.memos.isEmpty()) {
             Column(
-                modifier = modifier
+                modifier = Modifier
                     .fillMaxSize()
                     .background(MaterialTheme.colorScheme.background),
                 verticalArrangement = Arrangement.Center,
@@ -158,7 +169,6 @@ fun EmptyMemoListPreview() {
             uiState = MemoListUiState(memos = emptyList()),
             onMemoClick = {},
             onSearchClick = {},
-            modifier = Modifier,
         )
     }
 }
@@ -181,7 +191,6 @@ fun MemoListPreview() {
             ),
             onMemoClick = {},
             onSearchClick = {},
-            modifier = Modifier,
         )
     }
 }
