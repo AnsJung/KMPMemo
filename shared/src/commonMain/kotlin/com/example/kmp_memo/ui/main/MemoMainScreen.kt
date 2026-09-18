@@ -1,5 +1,6 @@
 package com.example.kmp_memo.ui.main
 
+import androidx.compose.foundation.background
 import androidx.compose.runtime.*
 import androidx.compose.material3.*
 import androidx.compose.foundation.layout.*
@@ -15,44 +16,43 @@ fun MemoMainScreen() {
     var selectedDestination by remember { mutableStateOf(MemoDestination.HOME) }
 
     Box(
-        modifier = Modifier.fillMaxSize()
-            .safeDrawingPadding(),
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        when (selectedDestination) {
-            MemoDestination.HOME -> {
-                MemoListScreen(
-                    onMemoClick = { /* Handle memo click */ },
-                    onSearchClick = { /* Handle search click */ }
-                )
-            }
-
-            MemoDestination.WRITE -> {
-                Text("Memo Editor Screen")
-//                MemoEditorScreen()
-            }
-        }
-
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(26.dp),
-            verticalArrangement = Arrangement.Bottom,
-            horizontalAlignment = Alignment.CenterHorizontally
+                .safeDrawingPadding(),
         ) {
-            MemoFloatingToolBar(
-                selectedDestination = selectedDestination,
-                onDestinationClick = { destination ->
-                    selectedDestination = destination
+            when (selectedDestination) {
+                MemoDestination.HOME -> {
+                    MemoListScreen(
+                        onMemoClick = { /* Handle memo click */ },
+                        onSearchClick = { /* Handle search click */ }
+                    )
                 }
-            )
-        }
-    }
-}
 
-@Preview(showBackground = true)
-@Composable
-private fun MemoMainScreenPreview() {
-    MemoTheme {
-        MemoMainScreen()
+                MemoDestination.WRITE -> {
+                    Text("Memo Editor Screen")
+//                MemoEditorScreen()
+                }
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(26.dp),
+                verticalArrangement = Arrangement.Bottom,
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                MemoFloatingToolBar(
+                    selectedDestination = selectedDestination,
+                    onDestinationClick = { destination ->
+                        selectedDestination = destination
+                    }
+                )
+            }
+        }
     }
 }

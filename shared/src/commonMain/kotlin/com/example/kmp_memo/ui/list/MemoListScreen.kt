@@ -21,12 +21,14 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.kmp_memo.data.model.Memo
 import com.example.kmp_memo.ui.theme.MemoTheme
 import kmpmemo.shared.generated.resources.Res
@@ -39,21 +41,24 @@ import kmpmemo.shared.generated.resources.memo_list_search_content_description
 import kmpmemo.shared.generated.resources.memo_list_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.viewmodel.koinViewModel
 
 @Composable
 fun MemoListScreen(
+    viewModel: MemoListViewModel = koinViewModel(),
     onMemoClick: (Long) -> Unit,
     onSearchClick: () -> Unit
 ) {
-    MemoListScreen(
-        uiState = MemoListUiState(memos = emptyList()),
+    val state by viewModel.memoListUiState.collectAsStateWithLifecycle()
+    MemoListContent(
+        uiState = state,
         onMemoClick = onMemoClick,
         onSearchClick = onSearchClick
     )
 }
 
 @Composable
-private fun MemoListScreen(
+private fun MemoListContent(
     uiState: MemoListUiState,
     onMemoClick: (Long) -> Unit,
     onSearchClick: () -> Unit
@@ -165,7 +170,7 @@ private fun MemoListScreen(
 @Preview(showBackground = true)
 fun EmptyMemoListPreview() {
     MemoTheme {
-        MemoListScreen(
+        MemoListContent(
             uiState = MemoListUiState(memos = emptyList()),
             onMemoClick = {},
             onSearchClick = {},
@@ -177,7 +182,7 @@ fun EmptyMemoListPreview() {
 @Composable
 fun MemoListPreview() {
     MemoTheme {
-        MemoListScreen(
+        MemoListContent(
             uiState = MemoListUiState(
                 memos = listOf(
                     Memo(
