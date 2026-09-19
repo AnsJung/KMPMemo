@@ -8,12 +8,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.example.kmp_memo.ui.editor.MemoEditorScreen
 import com.example.kmp_memo.ui.list.MemoListScreen
 import com.example.kmp_memo.ui.theme.MemoTheme
 
 @Composable
 fun MemoMainScreen() {
-    var selectedDestination by remember { mutableStateOf(MemoDestination.HOME) }
+    var selectedDestination by remember {
+        mutableStateOf<MemoDestination>(MemoDestination.Home)
+    }
 
     Box(
         modifier = Modifier
@@ -25,17 +28,24 @@ fun MemoMainScreen() {
                 .fillMaxSize()
                 .safeDrawingPadding(),
         ) {
-            when (selectedDestination) {
-                MemoDestination.HOME -> {
+            when (val current = selectedDestination) { // TODO: selectedDestination를 current로 바꾸는 이유와 memoId 캐스팅 확인
+                MemoDestination.Home -> {
                     MemoListScreen(
-                        onMemoClick = { /* Handle memo click */ },
+                        onMemoClick = { memoId ->
+                            selectedDestination = MemoDestination.Write(memoId)
+                        },
                         onSearchClick = { /* Handle search click */ }
                     )
                 }
 
-                MemoDestination.WRITE -> {
-                    Text("Memo Editor Screen")
-//                MemoEditorScreen()
+                is MemoDestination.Write -> {
+                    MemoEditorScreen(
+                        currentId = current.memoId,
+                        onSaved = { memoId -> // TODO: memoId 수정 확인
+                            selectedDestination = MemoDestination.Home
+                        },
+                        modifier = Modifier.padding(bottom = 104.dp),
+                    )
                 }
             }
 

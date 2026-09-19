@@ -78,6 +78,22 @@ private class FakeMemoRepository(initialMemos: List<Memo>) : MemoRepository {
 
     override fun observeMemos(): Flow<List<Memo>> = memos.asStateFlow()
 
+    // 이 가짜 저장소는 목록 관찰 테스트에만 사용한다.
+    // 예상하지 않은 CRUD 호출은 조용히 무시하지 않고 테스트를 즉시 실패시킨다.
+    override suspend fun getMemo(id: Long): Memo? =
+        error("이 테스트에서는 단일 메모를 조회하지 않는다.")
+
+    override suspend fun createMemo(title: String, content: String): Long =
+        error("이 테스트에서는 메모를 생성하지 않는다.")
+
+    override suspend fun updateMemo(id: Long, title: String, content: String) {
+        error("이 테스트에서는 메모를 수정하지 않는다.")
+    }
+
+    override suspend fun deleteMemo(id: Long) {
+        error("이 테스트에서는 메모를 삭제하지 않는다.")
+    }
+
     fun replaceMemos(newMemos: List<Memo>) {
         memos.value = newMemos
     }

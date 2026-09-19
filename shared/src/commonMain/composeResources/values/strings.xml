@@ -12,4 +12,14 @@
     <string name="memo_list_search_content_description">메모 검색</string>
     <string name="memo_list_home_content_description">홈</string>
     <string name="memo_list_new_memo_content_description">새 메모 작성</string>
+
+    <!-- Memo Editor -->
+    <string name="memo_editor_new_title">새 메모</string>
+    <string name="memo_editor_close_content_description">메모 작성 닫기</string>
+    <string name="memo_editor_save">저장</string>
+    <string name="memo_editor_title_label">제목</string>
+    <string name="memo_editor_title_placeholder">제목을 입력하세요</string>
+    <string name="memo_editor_content_label">내용</string>
+    <string name="memo_editor_content_placeholder">내용을 입력하세요</string>
+    <string name="memo_editor_content_length">%1$d자</string>
 </resources>

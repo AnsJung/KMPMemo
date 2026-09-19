@@ -1,6 +1,9 @@
 package com.example.kmp_memo.ui.main
 
-enum class MemoDestination {
-    HOME,
-    WRITE,
+sealed interface MemoDestination {
+    data object Home : MemoDestination
+
+    data class Write(
+        val memoId: Long? = null
+    ) : MemoDestination
 }

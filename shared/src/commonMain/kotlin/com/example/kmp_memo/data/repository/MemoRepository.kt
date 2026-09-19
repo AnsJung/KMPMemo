@@ -9,4 +9,19 @@ import kotlinx.coroutines.flow.Flow
 interface MemoRepository {
 
     fun observeMemos() : Flow<List<Memo>>
+
+    suspend fun getMemo(id: Long): Memo?
+
+    suspend fun createMemo(
+        title: String,
+        content: String,
+    ): Long
+
+    suspend fun updateMemo(
+        id: Long,
+        title: String,
+        content: String,
+    )
+
+    suspend fun deleteMemo(id: Long)
 }

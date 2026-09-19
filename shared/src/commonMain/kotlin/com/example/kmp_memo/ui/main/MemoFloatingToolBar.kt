@@ -29,15 +29,21 @@ import org.jetbrains.compose.resources.painterResource
 
 private fun MemoDestination.iconRes(): DrawableResource {
     return when (this) {
-        MemoDestination.HOME -> Res.drawable.ic_home
-        MemoDestination.WRITE -> Res.drawable.ic_note
+        MemoDestination.Home -> Res.drawable.ic_home
+        is MemoDestination.Write -> Res.drawable.ic_note
     }
 }
+
 @Composable
 fun MemoFloatingToolBar(
-    selectedDestination: MemoDestination = MemoDestination.HOME,
+    selectedDestination: MemoDestination = MemoDestination.Home,
     onDestinationClick: (MemoDestination) -> Unit,
 ) {
+    val toolbarDestinations = listOf(
+        MemoDestination.Home,
+        MemoDestination.Write()
+    )
+
     Surface(
         shape = RoundedCornerShape(percent = 50),
         color = MaterialTheme.colorScheme.surface,
@@ -45,16 +51,32 @@ fun MemoFloatingToolBar(
     ) {
         Row(
             modifier = Modifier
-                .background(color=MaterialTheme.colorScheme.primaryContainer)
+                .background(color = MaterialTheme.colorScheme.primaryContainer)
                 .padding(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            MemoDestination.entries.forEach{ destination ->
+
+            toolbarDestinations.forEach { destination ->
                 MemoToolbarItem(
-                    onClick = { onDestinationClick(destination) },
-                    selected = destination == selectedDestination,
+                    onClick = {
+                        if (destination is MemoDestination.Write) {
+                            onDestinationClick(MemoDestination.Write(memoId = null))
+                        }else{
+                            onDestinationClick(destination)
+                        }
+                    },
+                    selected = when (destination) {
+                        MemoDestination.Home ->
+                            selectedDestination is MemoDestination.Home
+
+                        is MemoDestination.Write ->
+                            selectedDestination is MemoDestination.Write
+                    },
                     iconRes = destination.iconRes(),
-                    contentDescription = destination.name,
+                    contentDescription = when (destination) {
+                        MemoDestination.Home -> "Home"
+                        is MemoDestination.Write -> "Write"
+                    },
                 )
             }
         }
@@ -63,7 +85,7 @@ fun MemoFloatingToolBar(
 
 @Composable
 fun MemoToolbarItem(
-    selected:Boolean,
+    selected: Boolean,
     iconRes: DrawableResource,
     contentDescription: String,
     onClick: () -> Unit,
@@ -88,7 +110,7 @@ fun MemoToolbarItem(
                 vertical = 12.dp,
             ),
         contentAlignment = Alignment.Center,
-    ){
+    ) {
         Icon(
             painter = painterResource(iconRes),
             contentDescription = contentDescription,
@@ -117,7 +139,7 @@ fun PreviewMemoFloatingToolBarSelectedHome() {
 fun PreviewMemoFloatingToolBarSelectedWrite() {
     MemoTheme {
         MemoFloatingToolBar(
-            selectedDestination = MemoDestination.WRITE,
+            selectedDestination = MemoDestination.Write(),
             onDestinationClick = {},
         )
     }
@@ -130,7 +152,7 @@ fun PreviewMemoFloatingToolBarSelectedWrite() {
 @Composable
 private fun MemoFloatingToolBarPreview() {
     var selectedDestination by remember {
-        mutableStateOf(MemoDestination.HOME)
+        mutableStateOf<MemoDestination>(MemoDestination.Home)
     }
     MemoTheme {
         Box(
