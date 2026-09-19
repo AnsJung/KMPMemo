@@ -97,6 +97,12 @@ class MemoEditorViewModel(
                     currentState.title,
                     currentState.content
                 )
+                _uiState.update { state ->
+                    state.copy(
+                        isSaving = false,
+                        savedMemoId = currentState.currentId,
+                    )
+                }
             } else {
                 val memoId = memoRepository.createMemo(
                     title = currentState.title.trim(),
