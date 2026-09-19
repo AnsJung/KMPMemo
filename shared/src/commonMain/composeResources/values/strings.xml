@@ -15,8 +15,10 @@
 
     <!-- Memo Editor -->
     <string name="memo_editor_new_title">새 메모</string>
+    <string name="memo_editor_saved_title">기존 메모</string>
     <string name="memo_editor_close_content_description">메모 작성 닫기</string>
     <string name="memo_editor_save">저장</string>
+    <string name="memo_editor_edit">편집</string>
     <string name="memo_editor_title_label">제목</string>
     <string name="memo_editor_title_placeholder">제목을 입력하세요</string>
     <string name="memo_editor_content_label">내용</string>

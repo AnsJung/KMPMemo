@@ -1,10 +1,12 @@
 package com.example.kmp_memo.ui.editor
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -35,8 +37,10 @@ import kmpmemo.shared.generated.resources.Res
 import kmpmemo.shared.generated.resources.memo_editor_content_label
 import kmpmemo.shared.generated.resources.memo_editor_content_length
 import kmpmemo.shared.generated.resources.memo_editor_content_placeholder
+import kmpmemo.shared.generated.resources.memo_editor_edit
 import kmpmemo.shared.generated.resources.memo_editor_new_title
 import kmpmemo.shared.generated.resources.memo_editor_save
+import kmpmemo.shared.generated.resources.memo_editor_saved_title
 import kmpmemo.shared.generated.resources.memo_editor_title_label
 import kmpmemo.shared.generated.resources.memo_editor_title_placeholder
 import org.jetbrains.compose.resources.stringResource
@@ -92,6 +96,7 @@ fun MemoEditorScreen(
         onContentChanged = viewModel::onContentChanged,
         onSaveClick = viewModel::saveMemo,
         modifier = modifier,
+        onEditClick = { viewModel.setViewMode(isViewMode = false) }
     )
 
 }
@@ -102,6 +107,7 @@ private fun MemoEditorContent(
     onTitleChanged: (String) -> Unit,
     onContentChanged: (String) -> Unit,
     onSaveClick: () -> Unit,
+    onEditClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -114,6 +120,7 @@ private fun MemoEditorContent(
         if (uiState.isViewMode) {
             MemoViewContent(
                 uiState = uiState,
+                onEditClick = onEditClick
             )
         } else {
             MemoEditContent(
@@ -129,12 +136,37 @@ private fun MemoEditorContent(
 @Composable
 private fun MemoViewContent(
     uiState: MemoEditorUiState,
+    onEditClick: () -> Unit
 ) {
-    Text(
-        text = uiState.title,
-        style = MaterialTheme.typography.headlineLarge,
-        color = MaterialTheme.colorScheme.onBackground,
-    )
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = uiState.title,
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Spacer(Modifier.weight(1f))
+        Button(
+            onClick = onEditClick,
+            shape = RoundedCornerShape(20.dp),
+            contentPadding = PaddingValues(horizontal = 16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+                disabledContainerColor = MaterialTheme.colorScheme.outline,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        ) {
+            Text(
+                text = stringResource(Res.string.memo_editor_edit),
+                style = MaterialTheme.typography.labelLarge,
+            )
+        }
+    }
+
 
     Spacer(modifier = Modifier.height(10.dp))
 
@@ -160,6 +192,7 @@ private fun ColumnScope.MemoEditContent(
     onSaveClick: () -> Unit,
 ) {
     EditorHeader(
+        isSavedMemo = uiState.currentId != null,
         isSaveEnabled = uiState.isSaveEnabled,
         onSaveClick = onSaveClick,
     )
@@ -228,6 +261,7 @@ private fun ColumnScope.MemoEditContent(
 
 @Composable
 private fun EditorHeader(
+    isSavedMemo: Boolean,
     isSaveEnabled: Boolean,
     onSaveClick: () -> Unit,
 ) {
@@ -237,7 +271,11 @@ private fun EditorHeader(
             .height(40.dp),
     ) {
         Text(
-            text = stringResource(Res.string.memo_editor_new_title),
+            text = if(isSavedMemo) {
+                stringResource(Res.string.memo_editor_saved_title)
+            } else{
+                stringResource(Res.string.memo_editor_new_title)
+            },
             modifier = Modifier.align(Alignment.Center),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onBackground,
@@ -302,6 +340,7 @@ private fun EmptyMemoEditorPreview() {
             onTitleChanged = {},
             onContentChanged = {},
             onSaveClick = {},
+            onEditClick = { },
         )
     }
 }
@@ -318,6 +357,7 @@ private fun FilledMemoEditorPreview() {
             onTitleChanged = {},
             onContentChanged = {},
             onSaveClick = {},
+            onEditClick = {},
         )
     }
 }
@@ -336,6 +376,7 @@ private fun FilledMemoViewModePreview() {
             onTitleChanged = {},
             onContentChanged = {},
             onSaveClick = {},
+            onEditClick = {}
         )
     }
 }

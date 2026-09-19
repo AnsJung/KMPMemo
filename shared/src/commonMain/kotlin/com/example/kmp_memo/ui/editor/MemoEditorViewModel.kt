@@ -5,15 +5,11 @@ import androidx.lifecycle.viewModelScope
 import com.example.kmp_memo.data.model.Memo
 import com.example.kmp_memo.data.repository.MemoRepository
 import com.example.kmp_memo.ui.formatter.toMemoDateTimeText
-import kmpmemo.shared.generated.resources.Res
-import kmpmemo.shared.generated.resources.memo_list_created_at
-import kmpmemo.shared.generated.resources.memo_list_updated_at
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
 
 class MemoEditorViewModel(
     private val memoRepository: MemoRepository,
@@ -95,17 +91,26 @@ class MemoEditorViewModel(
         }
 
         viewModelScope.launch {
-            val memoId = memoRepository.createMemo(
-                title = currentState.title.trim(),
-                content = currentState.content.trim(),
-            )
-
-            _uiState.update { state ->
-                state.copy(
-                    isSaving = false,
-                    savedMemoId = memoId,
+            if (currentState.currentId != null) {
+                memoRepository.updateMemo(
+                    currentState.currentId,
+                    currentState.title,
+                    currentState.content
                 )
+            } else {
+                val memoId = memoRepository.createMemo(
+                    title = currentState.title.trim(),
+                    content = currentState.content.trim(),
+                )
+
+                _uiState.update { state ->
+                    state.copy(
+                        isSaving = false,
+                        savedMemoId = memoId,
+                    )
+                }
             }
+
         }
     }
 
