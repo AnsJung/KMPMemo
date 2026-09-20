@@ -10,7 +10,10 @@ data class MemoEditorUiState(
     // 보기 모드 시간 표현
     val timeMillis: Long? = null,
     val isUpdated: Boolean = false,
-    val hasSaveError: Boolean = false
+    val hasSaveError: Boolean = false,
+    val isDeleting: Boolean = false,
+    val isDeleted: Boolean = false,
+    val hasDeleteError: Boolean = false,
 ) {
     val isSaveEnabled: Boolean
         get() = !isSaving &&

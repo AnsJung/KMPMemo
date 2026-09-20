@@ -214,6 +214,87 @@ class MemoEditorViewModelTest {
             }
         }
     }
+
+    @Test
+    fun 기존_메모를_삭제하면_삭제_결과를_상태에_기록한다() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val store = ViewModelStore()
+
+        try {
+            val existingMemo = Memo(
+                id = 5L,
+                title = "삭제할 메모",
+                content = "삭제할 내용",
+                createdAt = 1_000L,
+            )
+            val repository = RecordingMemoRepository(memoToReturn = existingMemo)
+            val viewModel = MemoEditorViewModel(repository)
+            store.put("memo-editor", viewModel)
+            viewModel.openMemo(existingMemo.id)
+            runCurrent()
+
+            viewModel.deleteMemo()
+            assertTrue(viewModel.uiState.value.isDeleting)
+            runCurrent()
+
+            assertEquals(1, repository.deleteCallCount)
+            assertEquals(existingMemo.id, repository.deletedId)
+            assertFalse(viewModel.uiState.value.isDeleting)
+            assertTrue(viewModel.uiState.value.isDeleted)
+
+            viewModel.consumeDeleteResult()
+
+            assertFalse(viewModel.uiState.value.isDeleted)
+        } finally {
+            try {
+                store.clear()
+                runCurrent()
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+    }
+
+    @Test
+    fun 삭제에_실패하면_오류_상태를_표시하고_사용자가_닫으면_해제한다() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val store = ViewModelStore()
+
+        try {
+            val existingMemo = Memo(
+                id = 9L,
+                title = "삭제 실패 메모",
+                content = "삭제 실패 내용",
+                createdAt = 2_000L,
+            )
+            val repository = RecordingMemoRepository(
+                memoToReturn = existingMemo,
+                deleteException = IllegalStateException("삭제 실패"),
+            )
+            val viewModel = MemoEditorViewModel(repository)
+            store.put("memo-editor", viewModel)
+            viewModel.openMemo(existingMemo.id)
+            runCurrent()
+
+            viewModel.deleteMemo()
+            runCurrent()
+
+            assertFalse(viewModel.uiState.value.isDeleting)
+            assertFalse(viewModel.uiState.value.isDeleted)
+            assertTrue(viewModel.uiState.value.hasDeleteError)
+
+            viewModel.dismissDeleteError()
+
+            assertFalse(viewModel.uiState.value.hasDeleteError)
+        } finally {
+            try {
+                store.clear()
+                runCurrent()
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+    }
 }
 
 /**
@@ -224,6 +305,7 @@ private class RecordingMemoRepository(
     private val saveGate: CompletableDeferred<Unit>? = null,
     private val memoToReturn: Memo? = null,
     private val saveException: Exception? = null,
+    private val deleteException: Exception? = null,
 ) : MemoRepository {
 
     var createCallCount: Int = 0
@@ -245,6 +327,12 @@ private class RecordingMemoRepository(
         private set
 
     var updatedContent: String? = null
+        private set
+
+    var deleteCallCount: Int = 0
+        private set
+
+    var deletedId: Long? = null
         private set
 
     override fun observeMemos(): Flow<List<Memo>> = flowOf(emptyList())
@@ -273,6 +361,8 @@ private class RecordingMemoRepository(
     }
 
     override suspend fun deleteMemo(id: Long) {
-        error("이 테스트에서는 메모를 삭제하지 않는다.")
+        deleteCallCount += 1
+        deletedId = id
+        deleteException?.let { exception -> throw exception }
     }
 }

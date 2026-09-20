@@ -128,4 +128,48 @@ class MemoEditorViewModel(
         _uiState.update { it.copy(hasSaveError = false) }
     }
 
+    fun deleteMemo() {
+        val currentState = _uiState.value
+        val memoId = currentState.currentId ?: return
+
+        if (currentState.isDeleting) return
+
+        _uiState.update { state ->
+            state.copy(
+                isDeleting = true,
+                hasDeleteError = false,
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                memoRepository.deleteMemo(memoId)
+                _uiState.update { state ->
+                    state.copy(isDeleted = true)
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                logger.e(exception) {
+                    "메모 삭제에 실패했습니다."
+                }
+                _uiState.update { state ->
+                    state.copy(hasDeleteError = true)
+                }
+            } finally {
+                _uiState.update { state ->
+                    state.copy(isDeleting = false)
+                }
+            }
+        }
+    }
+
+    fun consumeDeleteResult() {
+        _uiState.update { it.copy(isDeleted = false) }
+    }
+
+    fun dismissDeleteError() {
+        _uiState.update { it.copy(hasDeleteError = false) }
+    }
+
 }

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -20,13 +21,20 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
@@ -39,12 +47,21 @@ import com.example.kmp_memo.ui.dialog.MemoDialog
 import com.example.kmp_memo.ui.formatter.toMemoDateTimeText
 import com.example.kmp_memo.ui.theme.MemoBodyText
 import com.example.kmp_memo.ui.theme.MemoTheme
+import kmpmemo.shared.generated.resources.common_cancel
+import kmpmemo.shared.generated.resources.common_confirm
+import kmpmemo.shared.generated.resources.common_delete
 import kmpmemo.shared.generated.resources.Res
+import kmpmemo.shared.generated.resources.ic_delete
 import kmpmemo.shared.generated.resources.memo_created_at
 import kmpmemo.shared.generated.resources.memo_editor_content_label
 import kmpmemo.shared.generated.resources.memo_editor_content_length
 import kmpmemo.shared.generated.resources.memo_editor_content_placeholder
 import kmpmemo.shared.generated.resources.memo_editor_edit
+import kmpmemo.shared.generated.resources.memo_editor_delete_content_description
+import kmpmemo.shared.generated.resources.memo_editor_delete_dialog_message
+import kmpmemo.shared.generated.resources.memo_editor_delete_dialog_title
+import kmpmemo.shared.generated.resources.memo_editor_delete_error_message
+import kmpmemo.shared.generated.resources.memo_editor_delete_error_title
 import kmpmemo.shared.generated.resources.memo_editor_new_title
 import kmpmemo.shared.generated.resources.memo_editor_save
 import kmpmemo.shared.generated.resources.memo_editor_save_error_message
@@ -54,7 +71,7 @@ import kmpmemo.shared.generated.resources.memo_editor_title_label
 import kmpmemo.shared.generated.resources.memo_editor_title_placeholder
 import kmpmemo.shared.generated.resources.memo_list_untitled
 import kmpmemo.shared.generated.resources.memo_updated_at
-import kmpmemo.shared.generated.resources.common_confirm
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -62,10 +79,14 @@ import org.koin.compose.viewmodel.koinViewModel
 fun MemoEditorScreen(
     currentId: Long? = null,
     onSaved: () -> Unit,
+    onDeleted: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MemoEditorViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showDeleteDialog by rememberSaveable(currentId) {
+        mutableStateOf(false)
+    }
 
     LaunchedEffect(currentId) {
         if (currentId != null) {
@@ -81,6 +102,14 @@ fun MemoEditorScreen(
             // 화면 이동으로 이 Composable이 사라지기 전에 저장 결과를 먼저 소비한다.
             viewModel.consumeSaveResult()
             onSaved()
+        }
+    }
+    val isDeleted = uiState.isDeleted
+
+    LaunchedEffect(isDeleted) {
+        if (isDeleted) {
+            viewModel.consumeDeleteResult()
+            onDeleted()
         }
     }
     val displayState = when (currentId) {
@@ -107,17 +136,62 @@ fun MemoEditorScreen(
         onContentChanged = viewModel::onContentChanged,
         onSaveClick = viewModel::saveMemo,
         modifier = modifier,
-        onEditClick = { viewModel.setViewMode(isViewMode = false) }
+        onEditClick = { viewModel.setViewMode(isViewMode = false) },
+        onDeleteClick = { showDeleteDialog = true },
     )
 
-    if (displayState.hasSaveError) {
-        MemoDialog(
-            title = stringResource(Res.string.memo_editor_save_error_title),
-            message = stringResource(Res.string.memo_editor_save_error_message),
-            confirmText = stringResource(Res.string.common_confirm),
-            onConfirm = viewModel::dismissSaveError,
-            onDismiss = viewModel::dismissSaveError,
-        )
+    when {
+        displayState.hasSaveError -> {
+            MemoDialog(
+                title = stringResource(Res.string.memo_editor_save_error_title),
+                message = stringResource(Res.string.memo_editor_save_error_message),
+                confirmText = stringResource(Res.string.common_confirm),
+                onConfirm = viewModel::dismissSaveError,
+                onDismiss = viewModel::dismissSaveError,
+            )
+        }
+
+        displayState.hasDeleteError -> {
+            MemoDialog(
+                title = stringResource(Res.string.memo_editor_delete_error_title),
+                message = stringResource(Res.string.memo_editor_delete_error_message),
+                confirmText = stringResource(Res.string.common_confirm),
+                onConfirm = viewModel::dismissDeleteError,
+                onDismiss = viewModel::dismissDeleteError,
+            )
+        }
+
+        showDeleteDialog -> {
+            MemoDialog(
+                title = stringResource(Res.string.memo_editor_delete_dialog_title),
+                message = stringResource(Res.string.memo_editor_delete_dialog_message),
+                confirmText = stringResource(Res.string.common_delete),
+                dismissText = stringResource(Res.string.common_cancel),
+                isDestructive = true,
+                onConfirm = {
+                    showDeleteDialog = false
+                    viewModel.deleteMemo()
+                },
+                onDismiss = { showDeleteDialog = false },
+            ) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    color = MaterialTheme.colorScheme.background,
+                ) {
+                    Text(
+                        text = displayState.title.ifBlank {
+                            stringResource(Res.string.memo_list_untitled)
+                        },
+                        modifier = Modifier.padding(
+                            horizontal = 16.dp,
+                            vertical = 13.dp,
+                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+            }
+        }
     }
 }
 
@@ -128,6 +202,7 @@ private fun MemoEditorContent(
     onContentChanged: (String) -> Unit,
     onSaveClick: () -> Unit,
     onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -140,7 +215,8 @@ private fun MemoEditorContent(
         if (uiState.isViewMode) {
             MemoViewContent(
                 uiState = uiState,
-                onEditClick = onEditClick
+                onEditClick = onEditClick,
+                onDeleteClick = onDeleteClick,
             )
         } else {
             MemoEditContent(
@@ -156,7 +232,8 @@ private fun MemoEditorContent(
 @Composable
 private fun MemoViewContent(
     uiState: MemoEditorUiState,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
 ) {
     val timeText = when {
         uiState.timeMillis == null -> ""
@@ -171,60 +248,85 @@ private fun MemoViewContent(
             uiState.timeMillis.toMemoDateTimeText(),
         )
     }
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(bottom = 72.dp),
         ) {
-            Text(
-                text = uiState.title.ifBlank {
-                    stringResource(Res.string.memo_list_untitled)
-                },
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 16.dp),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Button(
-                onClick = onEditClick,
-                shape = RoundedCornerShape(20.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                    disabledContainerColor = MaterialTheme.colorScheme.outline,
-                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = stringResource(Res.string.memo_editor_edit),
-                    style = MaterialTheme.typography.labelLarge,
+                    text = uiState.title.ifBlank {
+                        stringResource(Res.string.memo_list_untitled)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(end = 16.dp),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Button(
+                    onClick = onEditClick,
+                    shape = RoundedCornerShape(20.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor = MaterialTheme.colorScheme.onPrimary,
+                        disabledContainerColor = MaterialTheme.colorScheme.outline,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    ),
+                ) {
+                    Text(
+                        text = stringResource(Res.string.memo_editor_edit),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+            if (timeText.isNotEmpty()) {
+                Text(
+                    text = timeText,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            if (uiState.content.isNotBlank()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(
+                    text = uiState.content,
+                    style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
+                    color = MemoBodyText,
                 )
             }
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-        if (timeText.isNotEmpty()) {
-            Text(
-                text = timeText,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-
-        if (uiState.content.isNotBlank()) {
-            Spacer(modifier = Modifier.height(24.dp))
-            Text(
-                text = uiState.content,
-                style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
-                color = MemoBodyText,
+        FilledIconButton(
+            onClick = onDeleteClick,
+            enabled = uiState.timeMillis != null && !uiState.isDeleting,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(48.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = MaterialTheme.colorScheme.errorContainer,
+                contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        ) {
+            Icon(
+                painter = painterResource(Res.drawable.ic_delete),
+                contentDescription = stringResource(
+                    Res.string.memo_editor_delete_content_description,
+                ),
+                modifier = Modifier.size(24.dp),
             )
         }
     }
@@ -387,6 +489,7 @@ private fun EmptyMemoEditorPreview() {
             onContentChanged = {},
             onSaveClick = {},
             onEditClick = { },
+            onDeleteClick = {},
         )
     }
 }
@@ -404,6 +507,7 @@ private fun FilledMemoEditorPreview() {
             onContentChanged = {},
             onSaveClick = {},
             onEditClick = {},
+            onDeleteClick = {},
         )
     }
 }
@@ -416,6 +520,7 @@ private fun FilledMemoViewModePreview() {
             uiState = MemoEditorUiState(
                 title = "Koin 핵심 개념",
                 content = "의존성 주입은 객체가 필요한 의존성을 외부에서 전달받는 방식이다.",
+                currentId = 1L,
                 isViewMode = true,
                 timeMillis = 1_789_010_520_000L,
                 isUpdated = true,
@@ -423,7 +528,8 @@ private fun FilledMemoViewModePreview() {
             onTitleChanged = {},
             onContentChanged = {},
             onSaveClick = {},
-            onEditClick = {}
+            onEditClick = {},
+            onDeleteClick = {},
         )
     }
 }

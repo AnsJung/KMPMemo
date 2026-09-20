@@ -4,7 +4,9 @@
     <string name="memo_updated_at">%1$s 수정</string>
 
     <!-- Common actions -->
+    <string name="common_cancel">취소</string>
     <string name="common_confirm">확인</string>
+    <string name="common_delete">삭제</string>
 
     <!-- Memo List -->
     <string name="memo_list_title">Pocket Memo</string>
@@ -29,4 +31,9 @@
     <string name="memo_editor_content_length">%1$d자</string>
     <string name="memo_editor_save_error_title">메모를 저장하지 못했어요</string>
     <string name="memo_editor_save_error_message">잠시 후 다시 시도해 주세요.</string>
+    <string name="memo_editor_delete_content_description">메모 삭제</string>
+    <string name="memo_editor_delete_dialog_title">메모를 삭제할까요?</string>
+    <string name="memo_editor_delete_dialog_message">이 작업은 되돌릴 수 없어요.</string>
+    <string name="memo_editor_delete_error_title">메모를 삭제하지 못했어요</string>
+    <string name="memo_editor_delete_error_message">잠시 후 다시 시도해 주세요.</string>
 </resources>

@@ -44,6 +44,9 @@ fun MemoMainScreen() {
                         onSaved = {
                             selectedDestination = MemoDestination.Home
                         },
+                        onDeleted = {
+                            selectedDestination = MemoDestination.Home
+                        },
                         modifier = Modifier.padding(bottom = 104.dp),
                     )
                 }
