@@ -35,6 +35,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.kmp_memo.ui.dialog.MemoDialog
 import com.example.kmp_memo.ui.formatter.toMemoDateTimeText
 import com.example.kmp_memo.ui.theme.MemoBodyText
 import com.example.kmp_memo.ui.theme.MemoTheme
@@ -46,11 +47,14 @@ import kmpmemo.shared.generated.resources.memo_editor_content_placeholder
 import kmpmemo.shared.generated.resources.memo_editor_edit
 import kmpmemo.shared.generated.resources.memo_editor_new_title
 import kmpmemo.shared.generated.resources.memo_editor_save
+import kmpmemo.shared.generated.resources.memo_editor_save_error_message
+import kmpmemo.shared.generated.resources.memo_editor_save_error_title
 import kmpmemo.shared.generated.resources.memo_editor_saved_title
 import kmpmemo.shared.generated.resources.memo_editor_title_label
 import kmpmemo.shared.generated.resources.memo_editor_title_placeholder
 import kmpmemo.shared.generated.resources.memo_list_untitled
 import kmpmemo.shared.generated.resources.memo_updated_at
+import kmpmemo.shared.generated.resources.common_confirm
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
@@ -106,6 +110,15 @@ fun MemoEditorScreen(
         onEditClick = { viewModel.setViewMode(isViewMode = false) }
     )
 
+    if (displayState.hasSaveError) {
+        MemoDialog(
+            title = stringResource(Res.string.memo_editor_save_error_title),
+            message = stringResource(Res.string.memo_editor_save_error_message),
+            confirmText = stringResource(Res.string.common_confirm),
+            onConfirm = viewModel::dismissSaveError,
+            onDismiss = viewModel::dismissSaveError,
+        )
+    }
 }
 
 @Composable

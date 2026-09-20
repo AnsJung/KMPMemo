@@ -67,7 +67,10 @@ class MemoEditorViewModel(
         if (!currentState.isSaveEnabled) return
 
         _uiState.update { state ->
-            state.copy(isSaving = true)
+            state.copy(
+                isSaving = true,
+                hasSaveError = false,
+            )
         }
         val title = currentState.title.trim()
         val content = currentState.content.trim()
@@ -102,6 +105,9 @@ class MemoEditorViewModel(
                 logger.e(exception) {
                     "메모 저장에 실패했습니다."
                 }
+                _uiState.update { state ->
+                    state.copy(hasSaveError = true)
+                }
             } finally {
                 _uiState.update { state ->
                     state.copy(isSaving = false)
@@ -116,6 +122,10 @@ class MemoEditorViewModel(
 
     fun consumeSaveResult() {
         _uiState.update { it.copy(savedMemoId = null) }
+    }
+
+    fun dismissSaveError() {
+        _uiState.update { it.copy(hasSaveError = false) }
     }
 
 }

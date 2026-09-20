@@ -2,6 +2,10 @@
     <string name="app_name">Pocket Memo</string>
     <string name="memo_created_at">%1$s 생성</string>
     <string name="memo_updated_at">%1$s 수정</string>
+
+    <!-- Common actions -->
+    <string name="common_confirm">확인</string>
+
     <!-- Memo List -->
     <string name="memo_list_title">Pocket Memo</string>
     <string name="memo_list_count">%1$d개의 메모</string>
@@ -23,4 +27,6 @@
     <string name="memo_editor_content_label">내용</string>
     <string name="memo_editor_content_placeholder">내용을 입력하세요</string>
     <string name="memo_editor_content_length">%1$d자</string>
+    <string name="memo_editor_save_error_title">메모를 저장하지 못했어요</string>
+    <string name="memo_editor_save_error_message">잠시 후 다시 시도해 주세요.</string>
 </resources>

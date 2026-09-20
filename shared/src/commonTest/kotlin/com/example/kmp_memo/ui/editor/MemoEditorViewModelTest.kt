@@ -181,6 +181,39 @@ class MemoEditorViewModelTest {
             }
         }
     }
+
+    @Test
+    fun 저장에_실패하면_오류_상태를_표시하고_사용자가_닫으면_해제한다() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val store = ViewModelStore()
+
+        try {
+            val repository = RecordingMemoRepository(
+                saveException = IllegalStateException("저장 실패"),
+            )
+            val viewModel = MemoEditorViewModel(repository)
+            store.put("memo-editor", viewModel)
+            viewModel.onTitleChanged("저장할 메모")
+
+            viewModel.saveMemo()
+            runCurrent()
+
+            assertFalse(viewModel.uiState.value.isSaving)
+            assertTrue(viewModel.uiState.value.hasSaveError)
+            assertNull(viewModel.uiState.value.savedMemoId)
+
+            viewModel.dismissSaveError()
+
+            assertFalse(viewModel.uiState.value.hasSaveError)
+        } finally {
+            try {
+                store.clear()
+                runCurrent()
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+    }
 }
 
 /**
@@ -190,6 +223,7 @@ private class RecordingMemoRepository(
     private val createdId: Long = 1L,
     private val saveGate: CompletableDeferred<Unit>? = null,
     private val memoToReturn: Memo? = null,
+    private val saveException: Exception? = null,
 ) : MemoRepository {
 
     var createCallCount: Int = 0
@@ -223,6 +257,8 @@ private class RecordingMemoRepository(
         createCallCount += 1
         createdTitle = title
         createdContent = content
+
+        saveException?.let { exception -> throw exception }
 
         // 중복 저장 테스트에서만 외부 신호가 올 때까지 저장 완료를 지연한다.
         saveGate?.await()
