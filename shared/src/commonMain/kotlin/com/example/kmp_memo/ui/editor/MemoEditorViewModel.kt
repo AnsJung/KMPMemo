@@ -2,29 +2,24 @@ package com.example.kmp_memo.ui.editor
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.kmp_memo.data.model.Memo
+import co.touchlab.kermit.Logger
 import com.example.kmp_memo.data.repository.MemoRepository
-import com.example.kmp_memo.ui.formatter.toMemoDateTimeText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 class MemoEditorViewModel(
     private val memoRepository: MemoRepository,
 ) : ViewModel() {
 
+    private val logger = Logger.withTag("MemoEditorViewModel")
     private val _uiState = MutableStateFlow(MemoEditorUiState())
 
     val uiState: StateFlow<MemoEditorUiState> =
         _uiState.asStateFlow()
-
-    fun setCurrentId(memoId: Long) {
-        _uiState.update { currentState ->
-            currentState.copy(currentId = memoId)
-        }
-    }
 
     fun setViewMode(isViewMode: Boolean) {
         _uiState.update { currentState ->
@@ -49,35 +44,20 @@ class MemoEditorViewModel(
             currentId = id,
             isViewMode = true,
         )
-        getMemo(id)
+        loadMemo(id)
     }
 
-    private fun getMemo(memoId: Long) {
+    private fun loadMemo(memoId: Long) {
         viewModelScope.launch {
             val memo = memoRepository.getMemo(memoId)
             _uiState.update { currentState ->
                 currentState.copy(
                     title = memo?.title ?: "",
                     content = memo?.content ?: "",
-                    time = setTimeText(memo)
+                    timeMillis = memo?.time,
+                    isUpdated = memo?.updatedAt != null,
                 )
             }
-        }
-    }
-
-    private fun setTimeText(memo: Memo?): String {
-        if (memo != null) {
-            val timeLabel = if (memo.updatedAt == null) {
-                "생성"
-            } else {
-                "수정"
-            }
-            return buildString {
-                append(memo.time.toMemoDateTimeText())
-                append(" $timeLabel")
-            }
-        } else {
-            return ""
         }
     }
 
@@ -89,34 +69,44 @@ class MemoEditorViewModel(
         _uiState.update { state ->
             state.copy(isSaving = true)
         }
-
+        val title = currentState.title.trim()
+        val content = currentState.content.trim()
         viewModelScope.launch {
-            if (currentState.currentId != null) {
-                memoRepository.updateMemo(
-                    currentState.currentId,
-                    currentState.title,
-                    currentState.content
-                )
-                _uiState.update { state ->
-                    state.copy(
-                        isSaving = false,
-                        savedMemoId = currentState.currentId,
+            try {
+                if (currentState.currentId != null) {
+                    memoRepository.updateMemo(
+                        currentState.currentId,
+                        title,
+                        content
                     )
-                }
-            } else {
-                val memoId = memoRepository.createMemo(
-                    title = currentState.title.trim(),
-                    content = currentState.content.trim(),
-                )
+                    _uiState.update { state ->
+                        state.copy(
+                            savedMemoId = currentState.currentId,
+                        )
+                    }
+                } else {
+                    val memoId = memoRepository.createMemo(
+                        title = title,
+                        content = content,
+                    )
 
+                    _uiState.update { state ->
+                        state.copy(
+                            savedMemoId = memoId,
+                        )
+                    }
+                }
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                logger.e(exception) {
+                    "메모 저장에 실패했습니다."
+                }
+            } finally {
                 _uiState.update { state ->
-                    state.copy(
-                        isSaving = false,
-                        savedMemoId = memoId,
-                    )
+                    state.copy(isSaving = false)
                 }
             }
-
         }
     }
 
@@ -125,10 +115,7 @@ class MemoEditorViewModel(
     }
 
     fun consumeSaveResult() {
-        _uiState.value = MemoEditorUiState()
+        _uiState.update { it.copy(savedMemoId = null) }
     }
 
-    fun discardDraft() {
-        _uiState.value = MemoEditorUiState()
-    }
 }

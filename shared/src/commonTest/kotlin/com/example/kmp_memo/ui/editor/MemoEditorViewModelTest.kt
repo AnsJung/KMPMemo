@@ -42,18 +42,6 @@ class MemoEditorViewModelTest {
     }
 
     @Test
-    fun 초안을_폐기하면_작성_상태가_초기화된다() {
-        val viewModel = MemoEditorViewModel(RecordingMemoRepository())
-        viewModel.onTitleChanged("폐기할 제목")
-        viewModel.onContentChanged("폐기할 내용")
-
-        viewModel.discardDraft()
-
-        // 기본 상태와 비교하면 입력값뿐 아니라 저장 관련 상태까지 모두 초기화됐는지 알 수 있다.
-        assertEquals(MemoEditorUiState(), viewModel.uiState.value)
-    }
-
-    @Test
     fun 빈_메모는_저장하지_않는다() {
         val repository = RecordingMemoRepository()
         val viewModel = MemoEditorViewModel(repository)
@@ -95,11 +83,58 @@ class MemoEditorViewModelTest {
             assertFalse(viewModel.uiState.value.isSaving)
             assertEquals(7L, viewModel.uiState.value.savedMemoId)
 
-            // 화면이 저장 결과를 처리하면 다음 작성에 사용할 기본 상태로 돌아간다.
+            // 화면이 저장 결과를 처리하면 savedMemoId만 비운다.
             viewModel.consumeSaveResult()
-            assertEquals(MemoEditorUiState(), viewModel.uiState.value)
+            val consumedState = viewModel.uiState.value
+            assertNull(consumedState.savedMemoId)
+            assertEquals("  저장할 제목  ", consumedState.title)
+            assertEquals("  저장할 내용  ", consumedState.content)
         } finally {
             // 실패한 테스트도 Main 설정과 ViewModel 작업을 다음 테스트에 남기지 않는다.
+            try {
+                store.clear()
+                runCurrent()
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+    }
+
+    @Test
+    fun 기존_메모를_수정하면_공백을_정리해_저장소에_전달한다() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val store = ViewModelStore()
+
+        try {
+            val existingMemo = Memo(
+                id = 3L,
+                title = "기존 제목",
+                content = "기존 내용",
+                createdAt = 1_000L,
+            )
+            val repository = RecordingMemoRepository(memoToReturn = existingMemo)
+            val viewModel = MemoEditorViewModel(repository)
+            store.put("memo-editor", viewModel)
+
+            // 실제 화면과 동일하게 기존 메모를 먼저 불러온 후 편집 상태를 만든다.
+            viewModel.openMemo(existingMemo.id)
+            runCurrent()
+            viewModel.setViewMode(isViewMode = false)
+            viewModel.onTitleChanged("  수정한 제목  ")
+            viewModel.onContentChanged("\n수정한 내용\n")
+
+            viewModel.saveMemo()
+            runCurrent()
+
+            // 기존 메모이므로 create가 아니라 update가 같은 ID로 한 번 호출되어야 한다.
+            assertEquals(0, repository.createCallCount)
+            assertEquals(1, repository.updateCallCount)
+            assertEquals(existingMemo.id, repository.updatedId)
+            assertEquals("수정한 제목", repository.updatedTitle)
+            assertEquals("수정한 내용", repository.updatedContent)
+            assertFalse(viewModel.uiState.value.isSaving)
+            assertEquals(existingMemo.id, viewModel.uiState.value.savedMemoId)
+        } finally {
             try {
                 store.clear()
                 runCurrent()
@@ -149,11 +184,12 @@ class MemoEditorViewModelTest {
 }
 
 /**
- * createMemo 호출 정보를 기록하는 Editor ViewModel 전용 가짜 저장소다.
+ * 생성과 수정 호출 정보를 기록하는 Editor ViewModel 전용 가짜 저장소다.
  */
 private class RecordingMemoRepository(
     private val createdId: Long = 1L,
     private val saveGate: CompletableDeferred<Unit>? = null,
+    private val memoToReturn: Memo? = null,
 ) : MemoRepository {
 
     var createCallCount: Int = 0
@@ -165,9 +201,22 @@ private class RecordingMemoRepository(
     var createdContent: String? = null
         private set
 
+    var updateCallCount: Int = 0
+        private set
+
+    var updatedId: Long? = null
+        private set
+
+    var updatedTitle: String? = null
+        private set
+
+    var updatedContent: String? = null
+        private set
+
     override fun observeMemos(): Flow<List<Memo>> = flowOf(emptyList())
 
-    override suspend fun getMemo(id: Long): Memo? = null
+    override suspend fun getMemo(id: Long): Memo? =
+        memoToReturn?.takeIf { memo -> memo.id == id }
 
     override suspend fun createMemo(title: String, content: String): Long {
         // 호출 정보를 먼저 기록해 저장이 대기 중인 상태에서도 횟수를 검증할 수 있게 한다.
@@ -181,7 +230,10 @@ private class RecordingMemoRepository(
     }
 
     override suspend fun updateMemo(id: Long, title: String, content: String) {
-        error("이 테스트에서는 메모를 수정하지 않는다.")
+        updateCallCount += 1
+        updatedId = id
+        updatedTitle = title
+        updatedContent = content
     }
 
     override suspend fun deleteMemo(id: Long) {

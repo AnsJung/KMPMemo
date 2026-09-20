@@ -41,7 +41,7 @@ fun MemoMainScreen() {
                 is MemoDestination.Write -> {
                     MemoEditorScreen(
                         currentId = current.memoId,
-                        onSaved = { memoId -> // TODO: memoId 수정 확인
+                        onSaved = {
                             selectedDestination = MemoDestination.Home
                         },
                         modifier = Modifier.padding(bottom = 104.dp),

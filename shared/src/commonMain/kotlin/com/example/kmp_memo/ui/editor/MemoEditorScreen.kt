@@ -1,7 +1,6 @@
 package com.example.kmp_memo.ui.editor
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -15,8 +14,10 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -29,11 +30,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.kmp_memo.ui.formatter.toMemoDateTimeText
+import com.example.kmp_memo.ui.theme.MemoBodyText
 import com.example.kmp_memo.ui.theme.MemoTheme
 import kmpmemo.shared.generated.resources.Res
+import kmpmemo.shared.generated.resources.memo_created_at
 import kmpmemo.shared.generated.resources.memo_editor_content_label
 import kmpmemo.shared.generated.resources.memo_editor_content_length
 import kmpmemo.shared.generated.resources.memo_editor_content_placeholder
@@ -43,14 +49,15 @@ import kmpmemo.shared.generated.resources.memo_editor_save
 import kmpmemo.shared.generated.resources.memo_editor_saved_title
 import kmpmemo.shared.generated.resources.memo_editor_title_label
 import kmpmemo.shared.generated.resources.memo_editor_title_placeholder
+import kmpmemo.shared.generated.resources.memo_list_untitled
+import kmpmemo.shared.generated.resources.memo_updated_at
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 
-//TODO: 불필요한 코드 체크 with VM
 @Composable
 fun MemoEditorScreen(
     currentId: Long? = null,
-    onSaved: (Long) -> Unit,
+    onSaved: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: MemoEditorViewModel = koinViewModel(),
 ) {
@@ -69,7 +76,7 @@ fun MemoEditorScreen(
         if (savedMemoId != null) {
             // 화면 이동으로 이 Composable이 사라지기 전에 저장 결과를 먼저 소비한다.
             viewModel.consumeSaveResult()
-            onSaved(savedMemoId)
+            onSaved()
         }
     }
     val displayState = when (currentId) {
@@ -138,50 +145,76 @@ private fun MemoViewContent(
     uiState: MemoEditorUiState,
     onEditClick: () -> Unit
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        Text(
-            text = uiState.title,
-            style = MaterialTheme.typography.headlineLarge,
-            color = MaterialTheme.colorScheme.onBackground,
+    val timeText = when {
+        uiState.timeMillis == null -> ""
+
+        uiState.isUpdated -> stringResource(
+            Res.string.memo_updated_at,
+            uiState.timeMillis.toMemoDateTimeText(),
         )
-        Spacer(Modifier.weight(1f))
-        Button(
-            onClick = onEditClick,
-            shape = RoundedCornerShape(20.dp),
-            contentPadding = PaddingValues(horizontal = 16.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                disabledContainerColor = MaterialTheme.colorScheme.outline,
-                disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-            ),
+
+        else -> stringResource(
+            Res.string.memo_created_at,
+            uiState.timeMillis.toMemoDateTimeText(),
+        )
+    }
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                text = stringResource(Res.string.memo_editor_edit),
-                style = MaterialTheme.typography.labelLarge,
+                text = uiState.title.ifBlank {
+                    stringResource(Res.string.memo_list_untitled)
+                },
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 16.dp),
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Button(
+                onClick = onEditClick,
+                shape = RoundedCornerShape(20.dp),
+                contentPadding = PaddingValues(horizontal = 16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    disabledContainerColor = MaterialTheme.colorScheme.outline,
+                    disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            ) {
+                Text(
+                    text = stringResource(Res.string.memo_editor_edit),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        if (timeText.isNotEmpty()) {
+            Text(
+                text = timeText,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (uiState.content.isNotBlank()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            Text(
+                text = uiState.content,
+                style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 26.sp),
+                color = MemoBodyText,
             )
         }
     }
-
-
-    Spacer(modifier = Modifier.height(10.dp))
-
-    Text(
-        text = uiState.time,
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-    )
-
-    Spacer(modifier = Modifier.height(20.dp))
-
-    Text(
-        text = uiState.content,
-        style = MaterialTheme.typography.bodyLarge,
-    )
 }
 
 @Composable
@@ -271,9 +304,9 @@ private fun EditorHeader(
             .height(40.dp),
     ) {
         Text(
-            text = if(isSavedMemo) {
+            text = if (isSavedMemo) {
                 stringResource(Res.string.memo_editor_saved_title)
-            } else{
+            } else {
                 stringResource(Res.string.memo_editor_new_title)
             },
             modifier = Modifier.align(Alignment.Center),
@@ -370,8 +403,9 @@ private fun FilledMemoViewModePreview() {
             uiState = MemoEditorUiState(
                 title = "Koin 핵심 개념",
                 content = "의존성 주입은 객체가 필요한 의존성을 외부에서 전달받는 방식이다.",
-                time = "2026.09.10 10:42 수정",
                 isViewMode = true,
+                timeMillis = 1_789_010_520_000L,
+                isUpdated = true,
             ),
             onTitleChanged = {},
             onContentChanged = {},

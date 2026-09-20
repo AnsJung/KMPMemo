@@ -20,6 +20,7 @@ internal val MemoOnTertiaryContainer = Color(0xFF4A2D00)
 
 internal val MemoBackground = Color(0xFFF7F9F7)
 internal val MemoOnBackground = Color(0xFF17201F)
+internal val MemoBodyText = Color(0xFF34413F)
 internal val MemoSurface = Color(0xFFFFFFFF)
 internal val MemoOnSurface = Color(0xFF17201F)
 internal val MemoSurfaceVariant = Color(0xFFEEF2F0)

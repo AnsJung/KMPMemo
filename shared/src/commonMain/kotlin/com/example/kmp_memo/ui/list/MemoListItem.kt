@@ -18,12 +18,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.kmp_memo.data.model.Memo
-import com.example.kmp_memo.ui.theme.MemoTheme
 import com.example.kmp_memo.ui.formatter.toMemoDateTimeText
+import com.example.kmp_memo.ui.theme.MemoTheme
 import kmpmemo.shared.generated.resources.Res
-import kmpmemo.shared.generated.resources.memo_list_created_at
+import kmpmemo.shared.generated.resources.memo_created_at
 import kmpmemo.shared.generated.resources.memo_list_untitled
-import kmpmemo.shared.generated.resources.memo_list_updated_at
+import kmpmemo.shared.generated.resources.memo_updated_at
 import org.jetbrains.compose.resources.stringResource
 
 private val consecutiveWhitespace = Regex("\\s+")
@@ -35,9 +35,9 @@ fun MemoListItem(
     onClick: () -> Unit,
 ) {
     val timeLabel = if (memo.updatedAt == null) {
-        Res.string.memo_list_created_at
+        Res.string.memo_created_at
     } else {
-        Res.string.memo_list_updated_at
+        Res.string.memo_updated_at
     }
 
     Surface(
