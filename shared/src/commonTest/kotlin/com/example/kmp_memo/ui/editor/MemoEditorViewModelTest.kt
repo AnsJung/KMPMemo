@@ -51,17 +51,17 @@ class MemoEditorViewModelTest {
         // 저장 불가능 상태에서는 코루틴을 시작하기 전에 반환해야 한다.
         assertEquals(0, repository.createCallCount)
         assertFalse(viewModel.uiState.value.isSaving)
-        assertNull(viewModel.uiState.value.savedMemoId)
+        assertNull(viewModel.uiState.value.result)
     }
 
     @Test
-    fun 메모를_저장하면_공백을_정리해_저장소에_전달하고_생성_ID를_상태에_기록한다() = runTest {
+    fun 메모를_저장하면_공백을_정리해_저장소에_전달하고_저장_결과를_상태에_기록한다() = runTest {
         // viewModelScope가 사용하는 Main을 이 테스트의 스케줄러와 연결한다.
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         val store = ViewModelStore()
 
         try {
-            val repository = RecordingMemoRepository(createdId = 7L)
+            val repository = RecordingMemoRepository()
             val viewModel = MemoEditorViewModel(repository)
 
             // ViewModelStore가 테스트 종료 시 viewModelScope도 함께 정리하게 한다.
@@ -81,12 +81,12 @@ class MemoEditorViewModelTest {
             assertEquals("저장할 제목", repository.createdTitle)
             assertEquals("저장할 내용", repository.createdContent)
             assertFalse(viewModel.uiState.value.isSaving)
-            assertEquals(7L, viewModel.uiState.value.savedMemoId)
+            assertEquals(MemoEditorResult.Saved, viewModel.uiState.value.result)
 
-            // 화면이 저장 결과를 처리하면 savedMemoId만 비운다.
-            viewModel.consumeSaveResult()
+            // 화면이 저장 결과를 처리하면 result만 비운다.
+            viewModel.consumeResult()
             val consumedState = viewModel.uiState.value
-            assertNull(consumedState.savedMemoId)
+            assertNull(consumedState.result)
             assertEquals("  저장할 제목  ", consumedState.title)
             assertEquals("  저장할 내용  ", consumedState.content)
         } finally {
@@ -133,7 +133,7 @@ class MemoEditorViewModelTest {
             assertEquals("수정한 제목", repository.updatedTitle)
             assertEquals("수정한 내용", repository.updatedContent)
             assertFalse(viewModel.uiState.value.isSaving)
-            assertEquals(existingMemo.id, viewModel.uiState.value.savedMemoId)
+            assertEquals(MemoEditorResult.Saved, viewModel.uiState.value.result)
         } finally {
             try {
                 store.clear()
@@ -200,7 +200,7 @@ class MemoEditorViewModelTest {
 
             assertFalse(viewModel.uiState.value.isSaving)
             assertTrue(viewModel.uiState.value.hasSaveError)
-            assertNull(viewModel.uiState.value.savedMemoId)
+            assertNull(viewModel.uiState.value.result)
 
             viewModel.dismissSaveError()
 
@@ -240,11 +240,11 @@ class MemoEditorViewModelTest {
             assertEquals(1, repository.deleteCallCount)
             assertEquals(existingMemo.id, repository.deletedId)
             assertFalse(viewModel.uiState.value.isDeleting)
-            assertTrue(viewModel.uiState.value.isDeleted)
+            assertEquals(MemoEditorResult.Deleted, viewModel.uiState.value.result)
 
-            viewModel.consumeDeleteResult()
+            viewModel.consumeResult()
 
-            assertFalse(viewModel.uiState.value.isDeleted)
+            assertNull(viewModel.uiState.value.result)
         } finally {
             try {
                 store.clear()
@@ -280,7 +280,7 @@ class MemoEditorViewModelTest {
             runCurrent()
 
             assertFalse(viewModel.uiState.value.isDeleting)
-            assertFalse(viewModel.uiState.value.isDeleted)
+            assertNull(viewModel.uiState.value.result)
             assertTrue(viewModel.uiState.value.hasDeleteError)
 
             viewModel.dismissDeleteError()

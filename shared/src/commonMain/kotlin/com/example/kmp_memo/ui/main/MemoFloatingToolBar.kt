@@ -38,6 +38,7 @@ private fun MemoDestination.iconRes(): DrawableResource {
 fun MemoFloatingToolBar(
     selectedDestination: MemoDestination = MemoDestination.Home,
     onDestinationClick: (MemoDestination) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val toolbarDestinations = listOf(
         MemoDestination.Home,
@@ -45,6 +46,7 @@ fun MemoFloatingToolBar(
     )
 
     Surface(
+        modifier = modifier,
         shape = RoundedCornerShape(percent = 50),
         color = MaterialTheme.colorScheme.surface,
         shadowElevation = 6.dp,
@@ -61,7 +63,7 @@ fun MemoFloatingToolBar(
                     onClick = {
                         if (destination is MemoDestination.Write) {
                             onDestinationClick(MemoDestination.Write(memoId = null))
-                        }else{
+                        } else {
                             onDestinationClick(destination)
                         }
                     },

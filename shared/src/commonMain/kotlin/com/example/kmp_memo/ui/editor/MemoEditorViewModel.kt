@@ -82,22 +82,14 @@ class MemoEditorViewModel(
                         title,
                         content
                     )
-                    _uiState.update { state ->
-                        state.copy(
-                            savedMemoId = currentState.currentId,
-                        )
-                    }
                 } else {
-                    val memoId = memoRepository.createMemo(
+                    memoRepository.createMemo(
                         title = title,
                         content = content,
                     )
-
-                    _uiState.update { state ->
-                        state.copy(
-                            savedMemoId = memoId,
-                        )
-                    }
+                }
+                _uiState.update { state ->
+                    state.copy(result = MemoEditorResult.Saved)
                 }
             } catch (exception: CancellationException) {
                 throw exception
@@ -120,8 +112,8 @@ class MemoEditorViewModel(
         _uiState.value = MemoEditorUiState()
     }
 
-    fun consumeSaveResult() {
-        _uiState.update { it.copy(savedMemoId = null) }
+    fun consumeResult() {
+        _uiState.update { it.copy(result = null) }
     }
 
     fun dismissSaveError() {
@@ -145,7 +137,7 @@ class MemoEditorViewModel(
             try {
                 memoRepository.deleteMemo(memoId)
                 _uiState.update { state ->
-                    state.copy(isDeleted = true)
+                    state.copy(result = MemoEditorResult.Deleted)
                 }
             } catch (exception: CancellationException) {
                 throw exception
@@ -162,10 +154,6 @@ class MemoEditorViewModel(
                 }
             }
         }
-    }
-
-    fun consumeDeleteResult() {
-        _uiState.update { it.copy(isDeleted = false) }
     }
 
     fun dismissDeleteError() {

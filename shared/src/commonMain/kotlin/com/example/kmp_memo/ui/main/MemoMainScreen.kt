@@ -28,13 +28,12 @@ fun MemoMainScreen() {
                 .fillMaxSize()
                 .safeDrawingPadding(),
         ) {
-            when (val current = selectedDestination) { // TODO: selectedDestination를 current로 바꾸는 이유와 memoId 캐스팅 확인
+            when (val current = selectedDestination) {
                 MemoDestination.Home -> {
                     MemoListScreen(
                         onMemoClick = { memoId ->
                             selectedDestination = MemoDestination.Write(memoId)
                         },
-                        onSearchClick = { /* Handle search click */ }
                     )
                 }
 
@@ -47,25 +46,20 @@ fun MemoMainScreen() {
                         onDeleted = {
                             selectedDestination = MemoDestination.Home
                         },
-                        modifier = Modifier.padding(bottom = 104.dp),
                     )
                 }
             }
 
-            Column(
+            MemoFloatingToolBar(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .align(Alignment.BottomCenter)
                     .padding(26.dp),
-                verticalArrangement = Arrangement.Bottom,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                MemoFloatingToolBar(
-                    selectedDestination = selectedDestination,
-                    onDestinationClick = { destination ->
-                        selectedDestination = destination
-                    }
-                )
-            }
+                selectedDestination = selectedDestination,
+                onDestinationClick = { destination ->
+                    selectedDestination = destination
+                }
+            )
         }
     }
 }
+

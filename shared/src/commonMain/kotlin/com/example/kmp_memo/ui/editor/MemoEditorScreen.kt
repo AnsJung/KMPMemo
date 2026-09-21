@@ -95,21 +95,22 @@ fun MemoEditorScreen(
             viewModel.resetEditor()
         }
     }
-    val savedMemoId = uiState.savedMemoId
+    val result = uiState.result
 
-    LaunchedEffect(savedMemoId) {
-        if (savedMemoId != null) {
-            // 화면 이동으로 이 Composable이 사라지기 전에 저장 결과를 먼저 소비한다.
-            viewModel.consumeSaveResult()
-            onSaved()
-        }
-    }
-    val isDeleted = uiState.isDeleted
+    LaunchedEffect(result) {
+        when (result) {
+            MemoEditorResult.Saved -> {
+                // 화면 이동으로 이 Composable이 사라지기 전에 결과를 먼저 소비한다.
+                viewModel.consumeResult()
+                onSaved()
+            }
 
-    LaunchedEffect(isDeleted) {
-        if (isDeleted) {
-            viewModel.consumeDeleteResult()
-            onDeleted()
+            MemoEditorResult.Deleted -> {
+                viewModel.consumeResult()
+                onDeleted()
+            }
+
+            null -> Unit
         }
     }
     val displayState = when (currentId) {
@@ -405,6 +406,9 @@ private fun ColumnScope.MemoEditContent(
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
+
+    // 하단 플로팅 툴바가 글자 수와 입력 영역을 가리지 않도록 공간을 확보한다.
+    Spacer(modifier = Modifier.height(72.dp))
 }
 
 @Composable
