@@ -256,6 +256,66 @@ class MemoEditorViewModelTest {
     }
 
     @Test
+    fun 저장되지_않은_새_메모는_삭제하지_않는다() {
+        val repository = RecordingMemoRepository()
+        val viewModel = MemoEditorViewModel(repository)
+
+        // 새 메모에는 currentId가 없으므로 저장소에 삭제를 요청할 대상도 없다.
+        viewModel.deleteMemo()
+
+        assertEquals(0, repository.deleteCallCount)
+        assertFalse(viewModel.uiState.value.isDeleting)
+        assertNull(viewModel.uiState.value.result)
+    }
+
+    @Test
+    fun 삭제_중에_다시_삭제해도_저장소는_한_번만_호출된다() = runTest {
+        Dispatchers.setMain(StandardTestDispatcher(testScheduler))
+        val store = ViewModelStore()
+        val deleteGate = CompletableDeferred<Unit>()
+
+        try {
+            val existingMemo = Memo(
+                id = 7L,
+                title = "한 번만 삭제할 메모",
+                content = "삭제할 내용",
+                createdAt = 1_000L,
+            )
+            val repository = RecordingMemoRepository(
+                memoToReturn = existingMemo,
+                deleteGate = deleteGate,
+            )
+            val viewModel = MemoEditorViewModel(repository)
+            store.put("memo-editor", viewModel)
+            viewModel.openMemo(existingMemo.id)
+            runCurrent()
+
+            viewModel.deleteMemo()
+            viewModel.deleteMemo()
+            runCurrent()
+
+            // 첫 요청이 끝나지 않은 동안 isDeleting이 두 번째 요청을 차단한다.
+            assertEquals(1, repository.deleteCallCount)
+            assertTrue(viewModel.uiState.value.isDeleting)
+
+            deleteGate.complete(Unit)
+            runCurrent()
+
+            assertFalse(viewModel.uiState.value.isDeleting)
+            assertEquals(MemoEditorResult.Deleted, viewModel.uiState.value.result)
+        } finally {
+            try {
+                deleteGate.complete(Unit)
+                store.clear()
+                coroutineContext.cancelChildren()
+                runCurrent()
+            } finally {
+                Dispatchers.resetMain()
+            }
+        }
+    }
+
+    @Test
     fun 삭제에_실패하면_오류_상태를_표시하고_사용자가_닫으면_해제한다() = runTest {
         Dispatchers.setMain(StandardTestDispatcher(testScheduler))
         val store = ViewModelStore()
@@ -306,6 +366,7 @@ private class RecordingMemoRepository(
     private val memoToReturn: Memo? = null,
     private val saveException: Exception? = null,
     private val deleteException: Exception? = null,
+    private val deleteGate: CompletableDeferred<Unit>? = null,
 ) : MemoRepository {
 
     var createCallCount: Int = 0
@@ -364,5 +425,7 @@ private class RecordingMemoRepository(
         deleteCallCount += 1
         deletedId = id
         deleteException?.let { exception -> throw exception }
+        // 중복 삭제 테스트에서 첫 번째 요청을 진행 중인 상태로 유지한다.
+        deleteGate?.await()
     }
 }

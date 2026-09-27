@@ -12,12 +12,12 @@ import kotlin.test.assertTrue
  * 메모리 저장소가 MemoRepository의 CRUD 규칙을 지키는지 검증한다.
  * 테스트가 실행되는 실제 시각에 영향을 받지 않도록 제어 가능한 시각을 전달한다.
  */
-class MemoRepositoryImplTest {
+class InMemoryMemoRepositoryImplTest {
 
     @Test
     fun 새_저장소는_빈_메모_목록을_제공한다() = runTest {
         // 구현체를 인터페이스 타입으로 사용해 Repository 계약을 기준으로 검증한다.
-        val repository: MemoRepository = MemoRepositoryImpl()
+        val repository: MemoRepository = InMemoryMemoRepositoryImpl()
 
         // StateFlow가 최초에 제공하는 목록을 한 번만 가져온다.
         val actual = repository.observeMemos().first()
@@ -28,7 +28,7 @@ class MemoRepositoryImplTest {
     @Test
     fun 메모를_생성하면_ID와_생성_시간을_저장한다() = runTest {
         // 고정된 시각을 반환하게 해 createdAt을 정확한 값으로 검증한다.
-        val repository: MemoRepository = MemoRepositoryImpl(
+        val repository: MemoRepository = InMemoryMemoRepositoryImpl(
             currentTimeMillis = { 1_000L },
         )
 
@@ -53,7 +53,7 @@ class MemoRepositoryImplTest {
     fun 새로_생성한_메모가_목록의_앞에_배치된다() = runTest {
         // 람다가 바라보는 값을 바꾸면 생성 호출마다 서로 다른 시각을 만들 수 있다.
         var currentTime = 1_000L
-        val repository: MemoRepository = MemoRepositoryImpl(
+        val repository: MemoRepository = InMemoryMemoRepositoryImpl(
             currentTimeMillis = { currentTime },
         )
 
@@ -69,7 +69,7 @@ class MemoRepositoryImplTest {
     @Test
     fun 메모를_수정하면_생성_시간은_유지하고_수정_시간을_기록한다() = runTest {
         var currentTime = 1_000L
-        val repository: MemoRepository = MemoRepositoryImpl(
+        val repository: MemoRepository = InMemoryMemoRepositoryImpl(
             currentTimeMillis = { currentTime },
         )
 
@@ -98,7 +98,7 @@ class MemoRepositoryImplTest {
 
     @Test
     fun 메모를_삭제하면_단일_조회와_목록에서_제거된다() = runTest {
-        val repository: MemoRepository = MemoRepositoryImpl(
+        val repository: MemoRepository = InMemoryMemoRepositoryImpl(
             currentTimeMillis = { 1_000L },
         )
         val id = repository.createMemo("삭제할 메모", "삭제할 본문")
@@ -114,7 +114,7 @@ class MemoRepositoryImplTest {
 
     @Test
     fun 존재하지_않는_ID를_수정하거나_삭제해도_목록은_변경되지_않는다() = runTest {
-        val repository: MemoRepository = MemoRepositoryImpl(
+        val repository: MemoRepository = InMemoryMemoRepositoryImpl(
             currentTimeMillis = { 1_000L },
         )
         repository.createMemo("유지할 메모", "유지할 본문")

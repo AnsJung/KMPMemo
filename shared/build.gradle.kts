@@ -5,6 +5,7 @@ plugins {
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.sqldelight)
 }
 
 kotlin {
@@ -43,6 +44,10 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
+            implementation(libs.sqldelight.android.driver)
+        }
+        iosMain.dependencies {
+            implementation(libs.sqldelight.native.driver)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)
@@ -62,6 +67,9 @@ kotlin {
             implementation(libs.koin.compose.viewmodel)
 
             implementation(libs.kermit)
+
+            implementation(libs.sqldelight.runtime)
+            implementation(libs.sqldelight.coroutines.extensions)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -70,10 +78,21 @@ kotlin {
         getByName("androidHostTest").dependencies {
             implementation(project.dependencies.platform(libs.koin.bom))
             implementation(libs.koin.test)
+            implementation(libs.sqldelight.sqlite.driver)
         }
     }
 }
 
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
+}
+
+sqldelight {
+    databases {
+        register("MemoDatabase") {
+            packageName.set(
+                "com.example.kmp_memo.data.database"
+            )
+        }
+    }
 }

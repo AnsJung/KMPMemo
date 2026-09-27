@@ -5,7 +5,9 @@ import Shared
 struct iOSApp: App {
 
     init(){
-        KoinInitializerKt.doInitKoin()
+        KoinInitializerKt.doInitKoin(
+            driverFactory: DatabaseDriverFactory()
+        )
     }
     var body: some Scene {
         WindowGroup {

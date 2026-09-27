@@ -1,0 +1,46 @@
+CREATE TABLE memo (
+    id INTEGER NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER
+);
+
+selectAll:
+SELECT *
+FROM memo
+ORDER BY
+    COALESCE(updatedAt, createdAt) DESC,
+    id DESC;
+
+selectById:
+SELECT *
+FROM memo
+WHERE id = :id;
+
+insert:
+INSERT INTO memo(
+    title,
+    content,
+    createdAt
+)
+VALUES (
+    :title,
+    :content,
+    :createdAt
+);
+
+lastInsertedId:
+SELECT last_insert_rowid();
+
+update:
+UPDATE memo
+SET
+    title = :title,
+    content = :content,
+    updatedAt = :updatedAt
+WHERE id = :id;
+
+deleteById:
+DELETE FROM memo
+WHERE id = :id;

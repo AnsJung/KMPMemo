@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlin.time.Clock
 
-class MemoRepositoryImpl(
+class InMemoryMemoRepositoryImpl(
     private val currentTimeMillis: () -> Long = {
         Clock.System.now()
             .toEpochMilliseconds()

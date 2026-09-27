@@ -1,5 +1,7 @@
 package com.example.kmp_memo.di
 
+import com.example.kmp_memo.data.database.MemoDatabase
+import kotlinx.coroutines.CoroutineDispatcher
 import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.test.verify.verify
 import kotlin.test.Test
@@ -13,8 +15,12 @@ class MemoModuleVerificationTest {
 
     @Test
     fun 메모_모듈의_모든_의존성이_연결되어_있다() {
-        // 객체를 실제 화면에서 요청하기 전에 누락된 Koin 정의가 없는지 검사한다.
-        // MemoListViewModel이 요구하는 MemoRepository 등록을 제거하면 이 테스트가 실패한다.
-        memoModule.verify()
+        // databaseModule이 제공하는 타입은 메모 모듈 외부 의존성으로 검증 대상에 알려준다.
+        memoModule.verify(
+            extraTypes = listOf(
+                MemoDatabase::class,
+                CoroutineDispatcher::class,
+            ),
+        )
     }
 }
