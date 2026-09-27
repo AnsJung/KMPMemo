@@ -8,6 +8,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import org.koin.dsl.module
 
+/**
+ * SQLDelight 데이터베이스 사용에 필요한 객체들을 Koin에 등록한다.
+ */
 fun databaseModule(
     driverFactory: DatabaseDriverFactory,
 ) = module {

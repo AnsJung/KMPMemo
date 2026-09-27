@@ -7,6 +7,9 @@ import com.example.kmp_memo.ui.list.MemoListViewModel
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
+/**
+ * 메모 저장소와 메모 화면에서 사용하는 ViewModel들을 Koin에 등록한다.
+ */
 val memoModule = module {
     single<MemoRepository> {
         SqlDelightMemoRepository(
