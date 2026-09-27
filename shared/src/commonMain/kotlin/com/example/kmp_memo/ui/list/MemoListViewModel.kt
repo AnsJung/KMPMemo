@@ -11,12 +11,16 @@ import kotlinx.coroutines.flow.stateIn
 class MemoListViewModel(private val memoRepository: MemoRepository) : ViewModel() {
 
     val memoListUiState: StateFlow<MemoListUiState> = memoRepository.observeMemos()
-        .map { memos -> MemoListUiState(memos) }
+        .map { memos ->
+            if (memos.isEmpty()) {
+                MemoListUiState.Empty
+            } else {
+                MemoListUiState.Content(memos)
+            }
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = MemoListUiState()
+            initialValue = MemoListUiState.Loading,
         )
-
-
 }

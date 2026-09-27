@@ -3,8 +3,15 @@ package com.example.kmp_memo.ui.list
 import com.example.kmp_memo.data.model.Memo
 
 /**
- * 메모 리스트 화면 UI 상태 저장 클래스
+ * 동시에 존재할 수 없는 메모 목록 화면 상태를 표현한다.
  */
-data class MemoListUiState(
-    val memos: List<Memo> = emptyList()
-)
+sealed interface MemoListUiState {
+
+    data object Loading : MemoListUiState
+
+    data object Empty : MemoListUiState
+
+    data class Content(
+        val memos: List<Memo>,
+    ) : MemoListUiState
+}

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -59,85 +60,118 @@ private fun MemoListContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
+            .background(MaterialTheme.colorScheme.background),
     ) {
-        Row(
+        MemoListHeader()
+
+        when (uiState) {
+            MemoListUiState.Loading -> MemoListLoadingContent()
+            MemoListUiState.Empty -> EmptyMemoListContent()
+            is MemoListUiState.Content -> MemoListItems(
+                memos = uiState.memos,
+                onMemoClick = onMemoClick,
+            )
+        }
+    }
+}
+
+@Composable
+private fun MemoListHeader() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, top = 24.dp, end = 24.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.memo_list_title),
+            style = MaterialTheme.typography.headlineLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+    }
+}
+
+@Composable
+private fun MemoListLoadingContent() {
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center,
+    ) {
+        CircularProgressIndicator(
+            modifier = Modifier.size(32.dp),
+            color = MaterialTheme.colorScheme.primary,
+            strokeWidth = 3.dp,
+        )
+    }
+}
+
+@Composable
+private fun EmptyMemoListContent() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 24.dp, top = 24.dp, end = 24.dp),
-            verticalAlignment = Alignment.CenterVertically,
+                .size(88.dp)
+                .clip(RoundedCornerShape(100.dp))
+                .background(MaterialTheme.colorScheme.primaryContainer),
         ) {
-            Text(
-                text = stringResource(Res.string.memo_list_title),
-                style = MaterialTheme.typography.headlineLarge,
-                color = MaterialTheme.colorScheme.onBackground,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-
-        }
-
-        if (uiState.memos.isNotEmpty()) {
-            Text(
-                text = stringResource(Res.string.memo_list_count, uiState.memos.size),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 24.dp, top = 16.dp),
-            )
-        }
-
-        if (uiState.memos.isEmpty()) {
-            Column(
+            Image(
+                painter = painterResource(Res.drawable.ic_note),
+                contentDescription = null,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(MaterialTheme.colorScheme.background),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(88.dp)
-                        .clip(RoundedCornerShape(100.dp))
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                ) {
-                    Image(
-                        painter = painterResource(Res.drawable.ic_note),
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(38.dp)
-                            .align(Alignment.Center),
-                        colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary)
-                    )
-                }
-                Spacer(modifier = Modifier.height(24.dp))
-                Text(
-                    text = stringResource(Res.string.memo_list_empty_memo_1),
-                    style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.onBackground,
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                Text(
-                    text = stringResource(Res.string.memo_list_empty_memo_2),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            LazyColumn(
-                contentPadding = PaddingValues(
-                    horizontal = 24.dp,
-                    vertical = 16.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                items(uiState.memos.size) { index ->
-                    val memo = uiState.memos[index]
-                    MemoListItem(
-                        memo = memo,
-                        onClick = { onMemoClick(memo.id) }
-                    )
-                }
-            }
+                    .size(38.dp)
+                    .align(Alignment.Center),
+                colorFilter = ColorFilter.tint(color = MaterialTheme.colorScheme.primary),
+            )
+        }
+        Spacer(modifier = Modifier.height(24.dp))
+        Text(
+            text = stringResource(Res.string.memo_list_empty_memo_1),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+        )
+        Spacer(modifier = Modifier.height(10.dp))
+        Text(
+            text = stringResource(Res.string.memo_list_empty_memo_2),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@Composable
+private fun MemoListItems(
+    memos: List<Memo>,
+    onMemoClick: (Long) -> Unit,
+) {
+    Text(
+        text = stringResource(Res.string.memo_list_count, memos.size),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(start = 24.dp, top = 16.dp),
+    )
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(
+            horizontal = 24.dp,
+            vertical = 16.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        items(memos.size) { index ->
+            val memo = memos[index]
+            MemoListItem(
+                memo = memo,
+                onClick = { onMemoClick(memo.id) },
+            )
         }
     }
 }
@@ -147,7 +181,7 @@ private fun MemoListContent(
 fun EmptyMemoListPreview() {
     MemoTheme {
         MemoListContent(
-            uiState = MemoListUiState(memos = emptyList()),
+            uiState = MemoListUiState.Empty,
             onMemoClick = {},
         )
     }
@@ -158,7 +192,7 @@ fun EmptyMemoListPreview() {
 fun MemoListPreview() {
     MemoTheme {
         MemoListContent(
-            uiState = MemoListUiState(
+            uiState = MemoListUiState.Content(
                 memos = listOf(
                     Memo(
                         id = 0,
@@ -166,9 +200,20 @@ fun MemoListPreview() {
                         content = "의존성 주입은 객체가 필요한 의존성을 외부에서 전달받는 방식이다.",
                         createdAt = 1_788_924_600_000L,
                         updatedAt = 1_789_010_520_000L
-                    )
-                )
+                    ),
+                ),
             ),
+            onMemoClick = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun LoadingMemoListPreview() {
+    MemoTheme {
+        MemoListContent(
+            uiState = MemoListUiState.Loading,
             onMemoClick = {},
         )
     }
