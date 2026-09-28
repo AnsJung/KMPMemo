@@ -48,7 +48,7 @@ Screen
   → SQLite
 ```
 
-메모 목록은 SQLDelight 쿼리를 `Flow`로 관찰합니다. 메모가 생성, 수정 또는 삭제되면 쿼리가 다시 실행되고 새로운 목록이 `ViewModel`의 화면 상태로 전달됩니다.
+메모 목록은 SQLDelight 쿼리를 `Flow`로 관찰합니다. 메모가 생성, 수정 또트는 삭제되면 쿼리가 다시 실행되고 새로운 목록이 `ViewModel`의 화면 상태로 전달됩니다.
 
 ## SQLDelight 적용 내용
 
@@ -58,9 +58,11 @@ Screen
 - `Flow`를 사용해 메모 목록 변경을 실시간으로 반영
 - Koin으로 데이터베이스, 저장소 및 ViewModel 연결
 
-## 메인 화면
+## 화면
 
-<img src="docs/images/main-screen.png" alt="홈과 새 메모 플로팅 툴바가 있는 메모 목록 디자인" width="320" />
+| iOS 메모 목록 | Android 새 메모 작성 |
+| :---: | :---: |
+| <img src="docs/images/main-screen-ios.png" alt="홈이 선택된 iOS 메모 목록 화면" width="300" /> | <img src="docs/images/main-screen-android.png" alt="새 메모가 선택된 Android 작성 화면" width="300" /> |
 
 ## 학습 방식 및 AI 활용
 
