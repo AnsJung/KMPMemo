@@ -1,0 +1,51 @@
+name: Common Tests
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  common-tests:
+    name: Shared common tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 17 and Gradle cache
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - name: Run shared common tests
+        run: >-
+          ./gradlew :shared:testAndroidHostTest --rerun --console=plain
+          --tests 'com.example.kmp_memo.data.model.MemoTest'
+          --tests 'com.example.kmp_memo.data.repository.InMemoryMemoRepositoryImplTest'
+          --tests 'com.example.kmp_memo.ui.MemoListViewModelTest'
+          --tests 'com.example.kmp_memo.ui.MemoTimeFormatterTest'
+          --tests 'com.example.kmp_memo.ui.editor.MemoEditorViewModelTest'
+
+      - name: Verify common test results
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from xml.etree import ElementTree
+
+          results = Path("shared/build/test-results/testAndroidHostTest")
+          suites = [ElementTree.parse(path).getroot() for path in results.glob("TEST-*.xml")]
+          counts = {key: sum(int(suite.get(key, 0)) for suite in suites)
+                    for key in ("tests", "failures", "errors", "skipped")}
+          print("Common test results:", ", ".join(f"{key}={value}" for key, value in counts.items()))
+          if not counts["tests"] or any(counts[key] for key in ("failures", "errors", "skipped")):
+              raise SystemExit("Expected common tests to run and pass.")
+          PY
