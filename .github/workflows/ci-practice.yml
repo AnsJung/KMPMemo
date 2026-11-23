@@ -1,0 +1,19 @@
+name: GitHub Actions 첫 실습
+
+on:
+  pull_request:
+    branches:
+      - codex/ci-practice-base
+
+permissions: {}
+
+jobs:
+  practice:
+    name: PR 이벤트 확인
+    runs-on: ubuntu-24.04
+    steps:
+      - name: 실행 메시지 출력
+        run: |
+          echo "연습 워크플로가 실행됐습니다."
+          echo "실행 이벤트: $GITHUB_EVENT_NAME"
+          echo "러너 OS: $RUNNER_OS"
